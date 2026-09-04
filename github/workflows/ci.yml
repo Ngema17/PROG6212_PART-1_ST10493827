@@ -1,0 +1,154 @@
+name: CI - Validate Repository Structure
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  validate-docs:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Validate /docs folder exists
+        run: |
+          if [ ! -d "docs" ]; then
+            echo "ERROR: /docs folder not found!"
+            exit 1
+          fi
+          echo " /docs folder exists"
+          
+      - name: Validate ERD file exists
+        run: |
+          if [ ! -f "docs/ERD.png" ] && [ ! -f "docs/ERD.pdf" ]; then
+            echo "ERROR: ERD file not found in /docs!"
+            echo "Expected: ERD.png or ERD.pdf"
+            exit 1
+          fi
+          echo " ERD file found"
+          
+      - name: Validate API Endpoint Plan exists
+        run: |
+          if [ ! -f "docs/API_Endpoint_Plan.md" ] && [ ! -f "docs/API_Endpoint_Plan.pdf" ]; then
+            echo "ERROR: API Endpoint Plan not found in /docs!"
+            echo "Expected: API_Endpoint_Plan.md or API_Endpoint_Plan.pdf"
+            exit 1
+          fi
+          echo " API Endpoint Plan found"
+          
+      - name: Validate SQL script exists
+        run: |
+          if [ ! -f "docs/RaceDay_Schema.sql" ]; then
+            echo "ERROR: SQL script not found in /docs!"
+            echo "Expected: RaceDay_Schema.sql"
+            exit 1
+          fi
+          echo " SQL script found"
+          
+      - name: Validate README.md exists
+        run: |
+          if [ ! -f "README.md" ]; then
+            echo "ERROR: README.md not found in root directory!"
+            exit 1
+          fi
+          echo " README.md found"
+          
+      - name: Check for at least one image file
+        run: |
+          if [ ! -f "docs/ERD.png" ] && [ ! -f "docs/ERD.pdf" ]; then
+            echo "WARNING: No ERD image found. Please add ERD.png or ERD.pdf"
+          else
+            echo " ERD file present"
+          fi
+          
+      - name: Display repository structure
+        run: |
+          echo " Repository Structure:"
+          echo ""
+          tree -L 2 || ls -la
+          
+      - name: Count files in docs folder
+        run: |
+          DOCS_COUNT=$(ls -1 docs/ | wc -l)
+          echo " Number of files in /docs: $DOCS_COUNT"
+          
+      - name: Validate SQL script has CREATE TABLE statements
+        run: |
+          if grep -q "CREATE TABLE" docs/RaceDay_Schema.sql; then
+            echo " SQL script contains CREATE TABLE statements"
+          else
+            echo "ERROR: SQL script missing CREATE TABLE statements"
+            exit 1
+          fi
+          
+      - name: Validate SQL script has at least 6 tables
+        run: |
+          TABLE_COUNT=$(grep -c "CREATE TABLE" docs/RaceDay_Schema.sql)
+          if [ $TABLE_COUNT -ge 6 ]; then
+            echo " SQL script has $TABLE_COUNT tables (minimum 6 required)"
+          else
+            echo "ERROR: SQL script has only $TABLE_COUNT tables. Minimum 6 required."
+            exit 1
+          fi
+          
+      - name: Check API endpoint plan has required sections
+        run: |
+          if grep -q "Authentication" docs/API_Endpoint_Plan.md || grep -q "Authentication" docs/API_Endpoint_Plan.pdf 2>/dev/null; then
+            echo " API endpoint plan includes Authentication section"
+          else
+            echo "WARNING: Could not verify Authentication section in API plan"
+          fi
+          
+      - name: Check SQL script has sample data
+        run: |
+          if grep -q "INSERT INTO" docs/RaceDay_Schema.sql; then
+            echo " SQL script contains sample data (INSERT statements)"
+          else
+            echo "WARNING: SQL script missing sample data (INSERT statements)"
+          fi
+          
+      - name: Check for stored procedures
+        run: |
+          if grep -q "CREATE PROCEDURE" docs/RaceDay_Schema.sql; then
+            echo " SQL script contains stored procedures"
+          else
+            echo " No stored procedures found (optional)"
+          fi
+          
+      - name: Check for views
+        run: |
+          if grep -q "CREATE VIEW" docs/RaceDay_Schema.sql; then
+            echo " SQL script contains views"
+          else
+            echo " No views found (optional)"
+          fi
+          
+      - name: Final validation summary
+        run: |
+          echo "================================================"
+          echo " ALL VALIDATIONS PASSED SUCCESSFULLY!"
+          echo "================================================"
+          echo ""
+          echo " Repository validated:"
+          echo "  - /docs folder: "
+          echo "  - ERD file: "                             
+          echo "  - API Endpoint Plan: "
+          echo "  - SQL Script: "
+          echo "  - README.md: "
+          echo ""
+          echo " Part 1 requirements met!"
+          echo "================================================"
+          
+      - name: Upload validation report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: validation-report
+          path: |
+            docs/
+            README.md
+          retention-days: 7
