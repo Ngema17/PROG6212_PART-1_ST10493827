@@ -136,3 +136,6 @@ PROG6212-RaceDay-POE/
 - SQL Server Management Studio (SSMS)
 - SQL Server 2019 or later
 - Windows Authentication or SQL Authentication
+
+### [Watch on YouTube](https://youtu.be/lSGaEEWxP8E)
+[![Main](https://img.youtube.com/vi/lSGaEEWxP8E/0.jpg)](https://www.youtube.com/watch?v=lSGaEEWxP8E)
